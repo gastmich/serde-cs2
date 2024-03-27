@@ -1,0 +1,58 @@
+= Serde CS2
+
+This library for using [Serde] serialization framework with data in CS2
+file format. This implementation offers from_str() and to_string()
+
+== Dependency
+
+[source,toml]
+----
+[dependencies]
+serde = "1.0"
+serde_cs2 = "0.1"
+----
+
+Hexadecimal values can be de-serialized by adding the serde_hex crate 
+
+[source,toml]
+----
+[dependencies]
+serde = "1.0"
+serde_cs2 = "0.1"
+serde_hex = "0.1"
+----
+
+== Using Serde CS2
+
+Here is a simplified example howto create a Lokomotive struct
+
+[source, rust]
+----
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename = "funktionen")]
+pub struct Funktionen {
+    pub nr: u8,
+    pub typ: u16,
+    pub dauer: i8,
+    pub wert: u8,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename = "lokomotive")]
+struct Lokomotive {
+    name: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    vorname: String,
+    #[serde(with = "SerHex::<StrictPfx>")]
+    uid: u16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(with = "SerHexOpt::<StrictPfx>")]
+    mfxuid: Option<u32>,
+    #[serde(with = "SerHex::<CompactPfx>")]
+    adresse: u16,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    funktionen: Vec<Funktionen>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    blocks: Option<[u8; 16]>
+}
+----

@@ -1,0 +1,15 @@
+[package]
+name = "serde-cs2"
+version = "0.1.0"
+edition = "2021"
+authors = ["Michael Gast <gastmich@mailbox.org"]
+description = "CS2 data format for serde"
+keywords = ["cs2", "serde"]
+license = "MIT"
+
+[dependencies]
+serde = "1.0.197"
+
+[dev-dependencies]
+serde_derive = "1.0.197"
+serde-hex = "0.1.0"
