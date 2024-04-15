@@ -403,7 +403,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         // Give the visitor access to each element of the sequence.
         self.input = &self.input.trim_start();
         let value = visitor.visit_seq(SpaceSeparated::new(self))?;
-        self.keys.pop();
         Ok(value)
     }
 
