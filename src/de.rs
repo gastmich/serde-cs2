@@ -12,7 +12,9 @@ pub struct Deserializer<'de> {
     // This string starts with the input data and characters are truncated off
     // the beginning as data is parsed.
     input: &'de str,
+    parse_value: bool,
     keys: Vec<&'de str>,
+    names: Vec<&'de str>,
 }
 
 impl<'de> Deserializer<'de> {
@@ -21,7 +23,7 @@ impl<'de> Deserializer<'de> {
     // `serde_cs2::from_str(...)` while advanced use cases that require a
     // deserializer can make one with `serde_cs2::Deserializer::from_str(...)`.
     pub fn from_str(input: &'de str) -> Self {
-        Deserializer { input, keys: vec![] }
+        Deserializer { input, parse_value: false, keys: vec![], names: vec![] }
     }
 }
 
@@ -160,6 +162,7 @@ impl<'de> Deserializer<'de> {
             if let Some(len) = line.find('=') {
                 let s = &self.input[..len];
                 self.input = &self.input[len..];
+                self.parse_value = true;
                 Ok(s)
             } else {
                 // this must be a sequence start, we just return the key value
@@ -168,14 +171,20 @@ impl<'de> Deserializer<'de> {
                 Ok(line)
             }
         } else if let Some(len) = self.input.find('\n') {
-                let s = &self.input[..len];
+            let s = &self.input[..len];
+            // if this is a value we remove the value from the input and return the value
+            // if it's not a value it is a struct name at the front of a line
+            // e.g. if we deserialize a full file including the file header [...]
+            // in this case we don't remove the name since we still need the struct name
+            if self.parse_value {
                 self.input = &self.input[len..];
-                Ok(s)
+            }
+            Ok(s)
         } else if self.input.len() > 0 {
-                let len = self.input.len();
-                let s = &self.input[..len];
-                self.input = &self.input[len..];
-                Ok(s)
+            let len = self.input.len();
+            let s = &self.input[..len];
+            self.input = &self.input[len..];
+            Ok(s)
         } else {
             Err(Error::ExpectedString)
         }
@@ -386,7 +395,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     {
         // Give the visitor access to each element of the sequence.
         let value = visitor.visit_seq(NewlineSeparated::new(self))?;
-        self.keys.pop();
+        self.names.pop();
+        if self.names.last().is_some_and(|name| self.keys.last().is_some_and(|key| key != name)) {
+            self.keys.pop();
+        }
         Ok(value)
     }
 
@@ -427,6 +439,12 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         V: Visitor<'de>,
     {
         let value = visitor.visit_map(NewlineSeparated::new(self))?;
+        self.names.pop();
+        if self.names.is_empty() {
+            self.keys.pop();
+        } else if self.names.last().is_some_and(|name| self.keys.last().is_some_and(|key| key != name)) {
+            self.keys.pop();
+        }
         return Ok(value);
     }
 
@@ -456,8 +474,11 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         if let Some(len) = self.input.find('\n') {
             self.input = &self.input[len + 1..];
             // we deserialize the full structure map
+            self.names.push(name);
             if !self.keys.last().is_some_and(|key| *key == name) {
-                self.keys.push(name);
+                if !(self.keys.is_empty() && name.starts_with("[") && name.ends_with("]")) {
+                    self.keys.push(name);
+                }
             }
             return self.deserialize_map(visitor);
         }
@@ -593,6 +614,10 @@ impl<'de, 'a> SeqAccess<'de> for NewlineSeparated<'a, 'de> {
         }
         // remove leading ' ' from the value string
         self.de.input = str.trim_start();
+        if self.first {
+            // this is the start of a sequence, push name to keys
+            self.de.names.push(key);
+        }
         self.first = false;
         // Deserialize an array element.
         seed.deserialize(&mut *self.de).map(Some)
@@ -640,6 +665,7 @@ impl<'de, 'a> MapAccess<'de> for NewlineSeparated<'a, 'de> {
         }
 
         // Deserialize a map key.
+        self.de.parse_value = false;
         seed.deserialize(&mut *self.de).map(Some)
     }
 
