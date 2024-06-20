@@ -302,8 +302,12 @@ impl<'a> ser::Serializer for &'a mut Serializer {
                 for _ in 0..self.level {
                     self.output += ".";
                 }
+            } else if !self.output.is_empty() && !self.output.ends_with("\n") {
+                self.output += "\n";
             }
-            self.level +=1;
+            if !(self.level == 0 && name.starts_with("[") && name.ends_with("]")) {
+                self.level +=1;
+            }
             self.output += name;
         } else {
             if !self.output.is_empty() && !self.output.ends_with("\n") {

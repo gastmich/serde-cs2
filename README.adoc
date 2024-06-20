@@ -56,3 +56,23 @@ struct Lokomotive {
     blocks: Option<[u8; 16]>
 }
 ----
+
+full files can be modeled in a single struct
+e.g for lokomotive.cs2 it looks like
+
+[source, rust]
+----
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename = "version")]
+pub struct Version {
+    pub major: u8,
+    pub minor: u8,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename = "[lokomotive]")]
+struct LokomotiveFile {
+    version: Version,
+    lokomotive: Vec<Lokomotive>,
+}
+----
