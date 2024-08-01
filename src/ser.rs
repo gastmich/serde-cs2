@@ -425,5 +425,8 @@ where
     let mut serializer = Serializer::default();
 
     value.serialize(&mut serializer)?;
+    if !serializer.output.is_empty() && !serializer.output.ends_with("\n") {
+        serializer.output.push('\n');
+    }
     Ok(serializer.output)
 }

@@ -212,7 +212,8 @@ fn lokstat() {
  .funktionen
  ..nr=30
  .funktionen
- ..nr=31"#;
+ ..nr=31
+"#;
 
     assert_eq!(serialized, cs2_str);
 
@@ -315,7 +316,8 @@ lokomotive
  .funktionen
  ..nr=30
  .funktionen
- ..nr=31"#;
+ ..nr=31
+"#;
 
     assert_eq!(serialized, cs2_str);
 
@@ -491,7 +493,8 @@ lokomotive
  .funktionen
  ..nr=30
  .funktionen
- ..nr=31"#;
+ ..nr=31
+"#;
 
     assert_eq!(serialized, cs2_str);
 

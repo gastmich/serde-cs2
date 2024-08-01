@@ -60,7 +60,8 @@ fn lokomotive_serialize() {
     let str = r#"lokomotive
  .name=Lok
  .uid=0x4001
- .adresse=0x5"#;
+ .adresse=0x5
+"#;
 
     let serialized = serde_cs2::to_string(&lokomotive).unwrap();
     assert_eq!(str, serialized);
@@ -128,7 +129,8 @@ fn lokomotive_serialize() {
  ..typ=17
  ..dauer=0
  ..wert=0
- .blocks=0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"#;
+ .blocks=0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+"#;
 
     assert_eq!(str, serialized);
 }
